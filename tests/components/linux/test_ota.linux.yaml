@@ -8,13 +8,14 @@ linux:
 logger:
   level: VERBOSE
 
-# TODO: Network components not yet implemented for Linux platform
-# OTA and API require network support which will be added in future phases
-# For now, this test validates compilation only
+# Network component - automatically configured for Linux
+# Uses BSD sockets implementation
+network:
 
 # Enable OTA
 ota:
   - platform: esphome
+    port: 3232
     password: "test123"
 
 # Enable API for testing
