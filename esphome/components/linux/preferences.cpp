@@ -9,7 +9,7 @@
 #include "esphome/core/log.h"
 
 namespace esphome {
-namespace linux_platform {
+namespace linux {
 namespace fs = std::filesystem;
 
 static const char *const TAG = "linux.preferences";
@@ -46,22 +46,28 @@ void LinuxPreferences::setup_() {
   this->filename_.append(".prefs");
 
   // Try to load existing preferences file
-  FILE *fp = fopen(this->filename_.c_str(), "rb");
-  if (fp != nullptr) {
-    while (!feof(fp)) {
+  std::ifstream file(this->filename_, std::ios::binary);
+  if (file.is_open()) {
+    while (file.good() && !file.eof()) {
       uint32_t key;
       uint8_t len;
-      if (fread(&key, sizeof(key), 1, fp) != 1)
+
+      file.read(reinterpret_cast<char *>(&key), sizeof(key));
+      if (file.gcount() != sizeof(key))
         break;
-      if (fread(&len, sizeof(len), 1, fp) != 1)
+
+      file.read(reinterpret_cast<char *>(&len), sizeof(len));
+      if (file.gcount() != sizeof(len))
         break;
-      uint8_t data[len];
-      if (fread(data, sizeof(uint8_t), len, fp) != len)
+
+      std::vector<uint8_t> data(len);
+      file.read(reinterpret_cast<char *>(data.data()), len);
+      if (file.gcount() != len)
         break;
-      std::vector vec(data, data + len);
-      this->data[key] = vec;
+
+      this->data[key] = data;
     }
-    fclose(fp);
+    file.close();
     ESP_LOGD(TAG, "Loaded preferences from '%s'", this->filename_.c_str());
   } else {
     ESP_LOGD(TAG, "No existing preferences file found at '%s'", this->filename_.c_str());
@@ -78,21 +84,26 @@ bool LinuxPreferences::sync() {
     return false;
   }
 
-  FILE *fp = fopen(this->filename_.c_str(), "wb");
-  if (fp == nullptr) {
+  std::ofstream file(this->filename_, std::ios::binary | std::ios::trunc);
+  if (!file.is_open()) {
     ESP_LOGE(TAG, "Failed to open preferences file '%s' for writing", this->filename_.c_str());
     return false;
   }
 
-  std::map<uint32_t, std::vector<uint8_t>>::iterator it;
-  for (it = this->data.begin(); it != this->data.end(); ++it) {
-    fwrite(&it->first, sizeof(uint32_t), 1, fp);
-    uint8_t len = it->second.size();
-    fwrite(&len, sizeof(len), 1, fp);
-    fwrite(it->second.data(), sizeof(uint8_t), it->second.size(), fp);
+  for (const auto &entry : this->data) {
+    file.write(reinterpret_cast<const char *>(&entry.first), sizeof(uint32_t));
+    uint8_t len = entry.second.size();
+    file.write(reinterpret_cast<const char *>(&len), sizeof(len));
+    file.write(reinterpret_cast<const char *>(entry.second.data()), entry.second.size());
   }
 
-  fclose(fp);
+  file.close();
+
+  if (!file.good()) {
+    ESP_LOGE(TAG, "Error writing preferences to '%s'", this->filename_.c_str());
+    return false;
+  }
+
   ESP_LOGD(TAG, "Synced preferences to '%s'", this->filename_.c_str());
   return true;
 }
@@ -118,13 +129,11 @@ bool LinuxPreferenceBackend::save(const uint8_t *data, size_t len) {
   return linux_preferences->save(this->key_, data, len);
 }
 
-bool LinuxPreferenceBackend::load(uint8_t *data, size_t len) {
-  return linux_preferences->load(this->key_, data, len);
-}
+bool LinuxPreferenceBackend::load(uint8_t *data, size_t len) { return linux_preferences->load(this->key_, data, len); }
 
 LinuxPreferences *linux_preferences;
 
-}  // namespace linux_platform
+}  // namespace linux
 
 ESPPreferences *global_preferences;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
