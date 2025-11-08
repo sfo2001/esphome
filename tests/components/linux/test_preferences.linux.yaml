@@ -6,7 +6,3 @@ linux:
 
 logger:
   level: DEBUG
-
-# Component that uses preferences
-api:
-  password: "test_password"

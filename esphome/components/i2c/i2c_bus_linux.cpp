@@ -43,6 +43,13 @@ void LinuxI2CBus::setup() {
   }
 }
 
+LinuxI2CBus::~LinuxI2CBus() {
+  if (this->file_descriptor_ >= 0) {
+    close(this->file_descriptor_);
+    this->file_descriptor_ = -1;
+  }
+}
+
 void LinuxI2CBus::dump_config() {
   ESP_LOGCONFIG(TAG, "I2C Bus:");
   ESP_LOGCONFIG(TAG, "  Bus Number: %d (/dev/i2c-%d)", this->bus_num_, this->bus_num_);
@@ -69,7 +76,7 @@ void LinuxI2CBus::dump_config() {
 }
 
 ErrorCode LinuxI2CBus::write_readv(uint8_t address, const uint8_t *write_buffer, size_t write_count,
-                                    uint8_t *read_buffer, size_t read_count) {
+                                   uint8_t *read_buffer, size_t read_count) {
   if (this->file_descriptor_ < 0) {
     ESP_LOGE(TAG, "I2C bus not initialized");
     return ERROR_NOT_INITIALIZED;

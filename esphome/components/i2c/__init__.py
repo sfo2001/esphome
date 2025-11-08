@@ -71,14 +71,26 @@ CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
             cv.GenerateID(): _bus_declare_type,
-            cv.Optional(CONF_SDA, default="SDA"): cv.Any(
+            cv.SplitDefault(
+                CONF_SDA,
+                esp32="SDA",
+                esp8266="SDA",
+                rp2040="SDA",
+                nrf52="SDA",
+            ): cv.All(
                 cv.only_on([PLATFORM_ESP32, PLATFORM_ESP8266, PLATFORM_RP2040, PLATFORM_NRF52]),
                 pins.internal_gpio_pin_number,
             ),
             cv.SplitDefault(CONF_SDA_PULLUP_ENABLED, esp32_idf=True): cv.All(
                 cv.only_with_esp_idf, cv.boolean
             ),
-            cv.Optional(CONF_SCL, default="SCL"): cv.Any(
+            cv.SplitDefault(
+                CONF_SCL,
+                esp32="SCL",
+                esp8266="SCL",
+                rp2040="SCL",
+                nrf52="SCL",
+            ): cv.All(
                 cv.only_on([PLATFORM_ESP32, PLATFORM_ESP8266, PLATFORM_RP2040, PLATFORM_NRF52]),
                 pins.internal_gpio_pin_number,
             ),

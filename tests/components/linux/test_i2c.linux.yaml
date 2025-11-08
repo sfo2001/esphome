@@ -1,6 +1,5 @@
 esphome:
   name: test_linux_i2c
-  platform: linux
 
 linux:
   preferences_path: /tmp/esphome-test-i2c
