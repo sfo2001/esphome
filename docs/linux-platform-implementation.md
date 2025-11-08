@@ -1186,18 +1186,18 @@ When ready to submit PR to `dev` branch:
 
 ### Overall Progress
 
-- [ ] Phase 1: Platform Foundation (No Hardware) - 0%
-- [ ] Phase 2: Preferences/Storage (No Hardware) - 0%
-- [ ] Phase 3: I2C Implementation (Pi 5) - 0%
+- [x] Phase 1: Platform Foundation (No Hardware) - 100%
+- [x] Phase 2: Preferences/Storage (No Hardware) - 100%
+- [x] Phase 3: I2C Implementation (Pi 5) - 100% (Implementation Complete - Testing Required)
 - [ ] Phase 4: GPIO Implementation (Pi 5) - 0%
 - [ ] Phase 5: Integration Testing (All Pi models) - 0%
 - [ ] Phase 6: Documentation & Polish - 0%
 
 ### Quick Reference
 
-**Current Phase**: Not started
-**Blocking Issues**: None
-**Next Action**: Start Phase 1 - create platform foundation
+**Current Phase**: Phase 3 Complete (Implementation)
+**Blocking Issues**: Phase 3 testing requires Raspberry Pi hardware
+**Next Action**: Test I2C implementation on Raspberry Pi 5 OR proceed with Phase 4 GPIO implementation
 
 ---
 
@@ -1207,7 +1207,55 @@ When ready to submit PR to `dev` branch:
 
 _Use this section to document any insights, gotchas, or important decisions made during implementation._
 
--
+#### Phase 3: I2C Implementation (Completed - Untested)
+
+**Date**: 2025-11-08
+
+**Files Created/Modified**:
+- Created `esphome/components/i2c/i2c_bus_linux.h` - Header file for Linux I2C bus implementation
+- Created `esphome/components/i2c/i2c_bus_linux.cpp` - Implementation using Linux i2c-dev kernel interface
+- Modified `esphome/components/i2c/__init__.py` - Added Linux support to I2C component
+- Created `tests/test_build_components/common/i2c/linux.yaml` - Common I2C test configuration
+- Created `tests/components/linux/test_i2c.linux.yaml` - Linux-specific I2C test
+
+**Implementation Details**:
+1. **Linux I2C Bus Class**: `LinuxI2CBus` extends `InternalI2CBus` and `Component`
+   - Uses `/dev/i2c-X` device files (default: `/dev/i2c-1` for Raspberry Pi)
+   - Implements `write_readv()` using `I2C_RDWR` ioctl for atomic write-read transactions
+   - Maps Linux errno codes to ESPHome `ErrorCode` enum for consistent error reporting
+
+2. **Configuration Schema**:
+   - Added `bus_num` parameter for Linux platform (default: 1)
+   - Linux doesn't use `sda`/`scl` pins (uses kernel device files instead)
+   - Maintains compatibility with existing platforms
+
+3. **Error Handling**:
+   - Comprehensive error mapping: EREMOTEIO/ENXIO → ERROR_NOT_ACKNOWLEDGED
+   - Timeout handling: ETIMEDOUT/EAGAIN → ERROR_TIMEOUT
+   - Detailed logging with helpful messages for common issues (permissions, device not found)
+
+4. **Testing**:
+   - Configuration validation tests can run on x86_64 development server
+   - Hardware testing requires Raspberry Pi with I2C enabled
+   - Test configuration uses bus_num=1 (standard Raspberry Pi I2C bus)
+
+**Key Decisions**:
+- Used `I2C_RDWR` ioctl for combined write-read operations to ensure atomicity
+- Default bus number is 1 (`/dev/i2c-1`) as this is the standard on Raspberry Pi
+- Error messages include actionable suggestions (enable I2C, check permissions, add to i2c group)
+
+**Known Limitations**:
+- Implementation is untested on real hardware (requires Raspberry Pi)
+- Frequency setting is stored but not enforced (Linux kernel manages bus speed)
+- No bus recovery mechanism (unlike Arduino implementation)
+
+**Next Steps for Testing**:
+1. Enable I2C on Raspberry Pi (`raspi-config`)
+2. Add user to `i2c` group
+3. Compile test configuration on Raspberry Pi
+4. Run with real I2C device connected
+5. Verify I2C scan detects devices
+6. Test actual sensor communication
 
 ### Performance Metrics
 
