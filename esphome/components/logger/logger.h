@@ -322,7 +322,7 @@ class Logger : public Component {
     }
   }
 
-#ifndef USE_HOST
+#if !defined(USE_HOST) && !defined(USE_LINUX)
   const LogString *get_uart_selection_();
 #endif
 
