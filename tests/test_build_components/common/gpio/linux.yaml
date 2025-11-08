@@ -1,0 +1,3 @@
+# Common GPIO configuration for Linux tests
+# Note: GPIO pins are typically configured directly in component tests
+# This file is provided for consistency but may not be included by all tests
