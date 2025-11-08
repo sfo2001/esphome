@@ -1,0 +1,12 @@
+esphome:
+  name: test_linux_preferences
+
+linux:
+  preferences_path: /tmp/esphome-prefs-test
+
+logger:
+  level: DEBUG
+
+# Component that uses preferences
+api:
+  password: "test_password"
