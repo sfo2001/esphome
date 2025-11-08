@@ -8,12 +8,9 @@ linux:
 logger:
   level: VERBOSE
 
-# Fake network component for now (Linux doesn't have real network yet)
-# But we need it for OTA to work
-wifi:
-  ssid: "fake"
-  password: "fake"
-  # This won't actually do anything on Linux, but satisfies the dependency
+# TODO: Network components not yet implemented for Linux platform
+# OTA and API require network support which will be added in future phases
+# For now, this test validates compilation only
 
 # Enable OTA
 ota:

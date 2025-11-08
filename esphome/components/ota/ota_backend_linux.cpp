@@ -8,6 +8,7 @@
 
 #include <cerrno>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <dirent.h>
 #include <limits.h>
@@ -85,12 +86,16 @@ std::string LinuxOTABackend::get_next_version_path_() {
   std::string current_version = this->get_current_version_();
   int version_num = 0;
 
-  // Try to parse the version number
-  try {
-    version_num = std::stoi(current_version);
-  } catch (...) {
-    ESP_LOGW(TAG, "Failed to parse version number, starting from 000");
+  // Parse the version number without exceptions
+  const char *str = current_version.c_str();
+  char *endptr;
+  long parsed = strtol(str, &endptr, 10);
+
+  if (endptr == str || *endptr != '\0' || parsed < 0 || parsed > 999) {
+    ESP_LOGW(TAG, "Failed to parse version number '%s', starting from 000", str);
     version_num = 0;
+  } else {
+    version_num = static_cast<int>(parsed);
   }
 
   int next_version = version_num + 1;
@@ -267,12 +272,15 @@ void LinuxOTABackend::cleanup_old_versions_(int keep_count) {
 
         // Check if it's a 3-digit version number
         if (version_str.length() == 3) {
-          try {
-            int version = std::stoi(version_str);
+          // Parse version without exceptions
+          const char *str = version_str.c_str();
+          char *endptr;
+          long parsed = strtol(str, &endptr, 10);
+
+          if (endptr != str && *endptr == '\0' && parsed >= 0 && parsed <= 999) {
+            int version = static_cast<int>(parsed);
             std::string full_path = dir_path + "/" + filename;
             versioned_files.push_back({version, full_path});
-          } catch (...) {
-            // Not a valid version number, skip
           }
         }
       }
