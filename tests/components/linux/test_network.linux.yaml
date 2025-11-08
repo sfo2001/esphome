@@ -1,0 +1,32 @@
+esphome:
+  name: test_network_linux
+  friendly_name: Linux Network Test
+
+linux:
+  preferences_path: /tmp/esphome-test-network
+
+logger:
+  level: VERBOSE
+
+# Network component - automatically configured for Linux
+# Uses BSD sockets implementation
+network:
+
+# Socket component - use BSD sockets for Linux
+socket:
+  implementation: bsd_sockets
+
+# Test OTA with network
+ota:
+  - platform: esphome
+    port: 3232
+    password: "test123"
+
+# Test API with network
+api:
+  password: "test123"
+  reboot_timeout: 0s  # Disable reboot timeout for testing
+  port: 6053
+  listen_backlog: 4
+  max_connections: 8
+  max_send_queue: 16
