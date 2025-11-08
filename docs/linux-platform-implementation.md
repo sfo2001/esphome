@@ -1189,15 +1189,15 @@ When ready to submit PR to `dev` branch:
 - [x] Phase 1: Platform Foundation (No Hardware) - 100%
 - [x] Phase 2: Preferences/Storage (No Hardware) - 100%
 - [x] Phase 3: I2C Implementation (Pi 5) - 100% (Implementation Complete - Testing Required)
-- [ ] Phase 4: GPIO Implementation (Pi 5) - 0%
+- [x] Phase 4: GPIO Implementation (Pi 5) - 100% (Implementation Complete - Testing Required)
 - [ ] Phase 5: Integration Testing (All Pi models) - 0%
 - [ ] Phase 6: Documentation & Polish - 0%
 
 ### Quick Reference
 
-**Current Phase**: Phase 3 Complete (Implementation)
-**Blocking Issues**: Phase 3 testing requires Raspberry Pi hardware
-**Next Action**: Test I2C implementation on Raspberry Pi 5 OR proceed with Phase 4 GPIO implementation
+**Current Phase**: Phase 4 Complete (Implementation)
+**Blocking Issues**: Phases 3-4 testing requires Raspberry Pi hardware
+**Next Action**: Test I2C and GPIO implementation on Raspberry Pi 5
 
 ---
 
@@ -1309,6 +1309,99 @@ _Use this section to document any insights, gotchas, or important decisions made
 4. Run with real I2C device connected
 5. Verify I2C scan detects devices
 6. Test actual sensor communication
+
+#### Phase 4: GPIO Implementation (Completed - Untested)
+
+**Date**: 2025-11-08
+**Status**: ✅ Complete (Implementation) - ⏳ Hardware Testing Pending
+
+**Files Created/Modified**:
+- Created `esphome/components/linux/gpio.h` - Header for Linux GPIO pin class using libgpiod
+- Created `esphome/components/linux/gpio.cpp` - Implementation of GPIO operations
+- Created `esphome/components/linux/gpio.py` - Python pin schema and validation
+- Modified `esphome/components/linux/__init__.py` - Added GPIO support and libgpiod library
+- Created `tests/components/linux/test_gpio.linux.yaml` - Comprehensive GPIO test configuration
+- Created `tests/test_build_components/common/gpio/linux.yaml` - Common GPIO test file
+
+**Implementation Details**:
+1. **Linux GPIO Pin Class**: `LinuxGPIOPin` extends `InternalGPIOPin`
+   - Uses libgpiod chardev interface for GPIO control
+   - Supports configurable GPIO chip (default: gpiochip0)
+   - Implements digital_read() and digital_write() operations
+   - Supports pull-up/pull-down resistors for input pins
+   - Proper RAII with destructor to release GPIO lines
+
+2. **Pin Modes Supported**:
+   - Output mode: Set GPIO as output with default state
+   - Input mode: Read GPIO state
+   - Input with pull-up: Internal pull-up resistor enabled
+   - Input with pull-down: Internal pull-down resistor enabled
+   - Inverted pins: Logical inversion supported for both input and output
+
+3. **GPIO Pin Validation**:
+   - Validates pin numbers (0-63 range)
+   - Warns about commonly reserved pins (I2C, SPI, UART)
+   - Supports "GPIO17" or 17 format for pin numbers
+   - Validates mode combinations (can't be both input and output)
+
+4. **Configuration**:
+   - GPIO chip name configurable in platform config (default: "gpiochip0")
+   - Pins specified directly in component configurations
+   - Supports standard ESPHome pin schema (number, mode, inverted)
+
+5. **Error Handling**:
+   - Comprehensive error messages with actionable suggestions
+   - Permission denied → suggests adding user to gpio group
+   - Chip not found → suggests using gpiodetect command
+   - Pin already in use → reports the consumer name
+   - Detailed logging for all GPIO operations
+
+6. **Testing Configuration**:
+   - Tests GPIO output (switch component)
+   - Tests GPIO input with pull-up and pull-down
+   - Tests inverted pins
+   - Includes interval-based toggling for testing
+
+**Key Decisions**:
+- Used libgpiod chardev interface (modern GPIO access method for Linux)
+- GPIO chip name configurable per platform (supports Raspberry Pi 5's multiple chips)
+- Pin validation allows 0-63 range (supports different Pi models and future expansion)
+- Warnings for reserved pins but doesn't block their use (user choice)
+- Interrupts not yet implemented (marked with warning in code)
+
+**Known Limitations**:
+- Implementation is untested on real hardware (requires Raspberry Pi)
+- GPIO interrupts not implemented (detach_interrupt() and to_isr() are stubs)
+- Frequency/speed control not exposed (kernel manages this)
+- Open-drain mode not directly supported by libgpiod (not implemented)
+- No bus recovery mechanism
+- All GPIO operations require Raspberry Pi with libgpiod installed
+
+**Compilation Testing**:
+- ⏳ Configuration validation: Pending (requires build test)
+- ⏳ Compilation test: Pending (requires Linux platform with libgpiod-dev)
+- ⏳ Code style check: Pending (ruff, clang-format)
+
+**Next Steps for Hardware Testing**:
+1. Install libgpiod on Raspberry Pi: `sudo apt-get install libgpiod-dev gpiod`
+2. Add user to gpio group: `sudo usermod -aG gpio $USER`
+3. Verify GPIO chips available: `gpiodetect` (should show gpiochip0)
+4. Compile test configuration on Raspberry Pi
+5. Connect test LED to GPIO 17 (output test)
+6. Connect test button to GPIO 22 (input test with pull-up)
+7. Run test and verify:
+   - LED toggles every 2 seconds
+   - Button presses are detected
+   - Pull-up/pull-down resistors work correctly
+   - No permission errors
+8. Test multiple simultaneous GPIO pins
+9. Test error handling (invalid pin, pin in use, etc.)
+10. Verify no conflicts with I2C pins (if I2C also in use)
+
+**Integration with Phase 3**:
+- GPIO and I2C should work together without conflicts
+- Integration testing will verify both can be used simultaneously
+- Same permissions model (user groups) for both I2C and GPIO
 
 ---
 

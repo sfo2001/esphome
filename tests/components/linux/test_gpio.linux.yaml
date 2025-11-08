@@ -1,0 +1,60 @@
+esphome:
+  name: test_linux_gpio
+  friendly_name: Linux GPIO Test
+
+linux:
+  gpio_chip: gpiochip0
+  preferences_path: /tmp/esphome-test-gpio
+
+logger:
+  level: VERBOSE
+
+# Test GPIO output (LED/relay)
+switch:
+  - platform: gpio
+    pin: 17
+    name: "Test GPIO Output 17"
+    id: gpio_out_17
+
+  - platform: gpio
+    pin:
+      number: 27
+      inverted: true
+    name: "Test GPIO Output 27 (Inverted)"
+    id: gpio_out_27
+
+# Test GPIO input (button/sensor)
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 22
+      mode:
+        input: true
+        pullup: true
+    name: "Test GPIO Input 22 (Pull-up)"
+    on_press:
+      - logger.log: "GPIO 22 pressed (low)"
+    on_release:
+      - logger.log: "GPIO 22 released (high)"
+
+  - platform: gpio
+    pin:
+      number: 23
+      mode:
+        input: true
+        pulldown: true
+    name: "Test GPIO Input 23 (Pull-down)"
+
+  - platform: gpio
+    pin:
+      number: 24
+      mode:
+        input: true
+    name: "Test GPIO Input 24 (No pull resistor)"
+
+# Test interval to toggle outputs
+interval:
+  - interval: 2s
+    then:
+      - switch.toggle: gpio_out_17
+      - switch.toggle: gpio_out_27
