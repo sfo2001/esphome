@@ -10,7 +10,7 @@ from esphome.const import (
 )
 from esphome.core import CORE
 
-from .const import KEY_LINUX
+from .const import KEY_LINUX, linux_ns
 
 CODEOWNERS = ["@esphome/core"]
 AUTO_LOAD = ["preferences"]
@@ -21,7 +21,10 @@ CONF_GPIO_CHIP = "gpio_chip"
 
 
 def set_core_data(config):
-    CORE.data[KEY_LINUX] = {}
+    CORE.data[KEY_LINUX] = {
+        CONF_PREFERENCES_PATH: config[CONF_PREFERENCES_PATH],
+        CONF_GPIO_CHIP: config[CONF_GPIO_CHIP],
+    }
     CORE.data[KEY_CORE][KEY_TARGET_PLATFORM] = PLATFORM_LINUX
     CORE.data[KEY_CORE][KEY_TARGET_FRAMEWORK] = "native"
     CORE.data[KEY_CORE][KEY_FRAMEWORK_VERSION] = cv.Version(1, 0, 0)
@@ -49,3 +52,9 @@ async def to_code(config):
     cg.add_platformio_option("platform", "platformio/native")
     cg.add_platformio_option("lib_ldf_mode", "off")
     cg.add_platformio_option("lib_compat_mode", "strict")
+
+    # Add preferences path define
+    cg.add_define("ESPHOME_PREFERENCES_PATH", config[CONF_PREFERENCES_PATH])
+
+    # Setup preferences
+    cg.add(linux_ns.setup_preferences())
