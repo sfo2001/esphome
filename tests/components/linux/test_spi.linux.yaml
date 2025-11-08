@@ -1,0 +1,21 @@
+esphome:
+  name: test_spi_basic
+
+linux:
+
+logger:
+  level: VERBOSE
+
+spi:
+  bus_num: 0
+  device_num: 0
+
+# Test with a simple SPI device (if available)
+# For now, just test that SPI bus initializes
+# Example with SPI display (commented out - requires actual hardware):
+# display:
+#   - platform: st7789v
+#     model: TTGO TDisplay 135x240
+#     cs_pin: 8  # Hardware CS on Pi (GPIO 8)
+#     dc_pin: 25  # Data/Command pin
+#     reset_pin: 27  # Reset pin

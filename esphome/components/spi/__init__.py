@@ -32,6 +32,7 @@ from esphome.const import (
     KEY_VARIANT,
     PLATFORM_ESP32,
     PLATFORM_ESP8266,
+    PLATFORM_LINUX,
     PLATFORM_RP2040,
     PlatformFramework,
 )
@@ -43,6 +44,8 @@ spi_ns = cg.esphome_ns.namespace("spi")
 SPIComponent = spi_ns.class_("SPIComponent", cg.Component)
 QuadSPIComponent = spi_ns.class_("QuadSPIComponent", cg.Component)
 OctalSPIComponent = spi_ns.class_("OctalSPIComponent", cg.Component)
+SPIBus = spi_ns.class_("SPIBus")
+LinuxSPIBus = spi_ns.class_("LinuxSPIBus", SPIBus, cg.Component)
 SPIDevice = spi_ns.class_("SPIDevice")
 SPIDataRate = spi_ns.enum("SPIDataRate")
 SPIMode = spi_ns.enum("SPIMode")
@@ -83,6 +86,8 @@ CONF_FORCE_SW = "force_sw"
 CONF_INTERFACE = "interface"
 CONF_INTERFACE_INDEX = "interface_index"
 CONF_RELEASE_DEVICE = "release_device"
+CONF_BUS_NUM = "bus_num"
+CONF_DEVICE_NUM = "device_num"
 TYPE_SINGLE = "single"
 TYPE_QUAD = "quad"
 TYPE_OCTAL = "octal"
@@ -279,6 +284,18 @@ def get_spi_interface(index):
     return "new SPIClass(HSPI)"
 
 
+# Linux SPI Schema - uses bus and device numbers instead of pins
+SPI_LINUX_SCHEMA = cv.All(
+    cv.Schema(
+        {
+            cv.GenerateID(): cv.declare_id(LinuxSPIBus),
+            cv.Optional(CONF_BUS_NUM, default=0): cv.int_range(min=0, max=10),
+            cv.Optional(CONF_DEVICE_NUM, default=0): cv.int_range(min=0, max=10),
+        }
+    ),
+    cv.only_on([PLATFORM_LINUX]),
+)
+
 SPI_SINGLE_SCHEMA = cv.All(
     cv.Schema(
         {
@@ -304,6 +321,9 @@ SPI_SINGLE_SCHEMA = cv.All(
 
 def spi_mode_schema(mode):
     if mode == TYPE_SINGLE:
+        # For Linux, use the Linux-specific schema
+        if CORE.is_linux:
+            return SPI_LINUX_SCHEMA
         return SPI_SINGLE_SCHEMA
     pin_count = 4 if mode == TYPE_QUAD else 8
     onlys = [cv.only_on([PLATFORM_ESP32]), cv.only_with_esp_idf]
@@ -357,22 +377,29 @@ async def to_code(configs):
     for spi in configs:
         var = cg.new_Pvariable(spi[CONF_ID])
         await cg.register_component(var, spi)
-        clk = await cg.gpio_pin_expression(spi[CONF_CLK_PIN])
-        cg.add(var.set_clk(clk))
-        if miso := spi.get(CONF_MISO_PIN):
-            cg.add(var.set_miso(await cg.gpio_pin_expression(miso)))
-        if mosi := spi.get(CONF_MOSI_PIN):
-            cg.add(var.set_mosi(await cg.gpio_pin_expression(mosi)))
-        if data_pins := spi.get(CONF_DATA_PINS):
-            cg.add(var.set_data_pins(data_pins))
-        if (index := spi.get(CONF_INTERFACE_INDEX)) is not None:
-            interface = get_spi_interface(index)
-            cg.add(var.set_interface(cg.RawExpression(interface)))
-            cg.add(
-                var.set_interface_name(
-                    re.sub(r"\W", "", interface.replace("new SPIClass", ""))
+
+        # Linux platform uses bus_num and device_num instead of pins
+        if CORE.is_linux:
+            cg.add(var.set_bus_num(spi[CONF_BUS_NUM]))
+            cg.add(var.set_device_num(spi[CONF_DEVICE_NUM]))
+        else:
+            # Other platforms use GPIO pins
+            clk = await cg.gpio_pin_expression(spi[CONF_CLK_PIN])
+            cg.add(var.set_clk(clk))
+            if miso := spi.get(CONF_MISO_PIN):
+                cg.add(var.set_miso(await cg.gpio_pin_expression(miso)))
+            if mosi := spi.get(CONF_MOSI_PIN):
+                cg.add(var.set_mosi(await cg.gpio_pin_expression(mosi)))
+            if data_pins := spi.get(CONF_DATA_PINS):
+                cg.add(var.set_data_pins(data_pins))
+            if (index := spi.get(CONF_INTERFACE_INDEX)) is not None:
+                interface = get_spi_interface(index)
+                cg.add(var.set_interface(cg.RawExpression(interface)))
+                cg.add(
+                    var.set_interface_name(
+                        re.sub(r"\W", "", interface.replace("new SPIClass", ""))
+                    )
                 )
-            )
 
 
 def spi_device_schema(
@@ -451,5 +478,6 @@ FILTER_SOURCE_FILES = filter_source_files_from_platform(
             PlatformFramework.LN882X_ARDUINO,
         },
         "spi_esp_idf.cpp": {PlatformFramework.ESP32_IDF},
+        "spi_bus_linux.cpp": {PlatformFramework.LINUX_NATIVE},
     }
 )

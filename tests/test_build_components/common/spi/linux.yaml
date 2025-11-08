@@ -1,0 +1,11 @@
+spi:
+  id: spi_bus
+  bus_num: 0      # /dev/spidev0.0 on Raspberry Pi
+  device_num: 0
+  # Note: clk_pin, miso_pin, mosi_pin are not used on Linux
+  # SPI pins are fixed by hardware:
+  # - GPIO 10: MOSI (Master Out, Slave In)
+  # - GPIO 9: MISO (Master In, Slave Out)
+  # - GPIO 11: SCLK (Clock)
+  # - GPIO 8: CE0 (Chip Select 0) - /dev/spidev0.0
+  # - GPIO 7: CE1 (Chip Select 1) - /dev/spidev0.1
