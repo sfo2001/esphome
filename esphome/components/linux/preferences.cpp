@@ -9,7 +9,7 @@
 #include "esphome/core/log.h"
 
 namespace esphome {
-namespace linux {
+namespace esphome_linux {
 namespace fs = std::filesystem;
 
 static const char *const TAG = "linux.preferences";
@@ -133,7 +133,7 @@ bool LinuxPreferenceBackend::load(uint8_t *data, size_t len) { return linux_pref
 
 LinuxPreferences *linux_preferences;
 
-}  // namespace linux
+}  // namespace esphome_linux
 
 ESPPreferences *global_preferences;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
