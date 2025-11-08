@@ -22,6 +22,7 @@ from esphome.const import (
     CONF_TIMEOUT,
     PLATFORM_ESP32,
     PLATFORM_ESP8266,
+    PLATFORM_LINUX,
     PLATFORM_NRF52,
     PLATFORM_RP2040,
     PlatformFramework,
@@ -38,11 +39,13 @@ InternalI2CBus = i2c_ns.class_("InternalI2CBus", I2CBus)
 ArduinoI2CBus = i2c_ns.class_("ArduinoI2CBus", InternalI2CBus, cg.Component)
 IDFI2CBus = i2c_ns.class_("IDFI2CBus", InternalI2CBus, cg.Component)
 ZephyrI2CBus = i2c_ns.class_("ZephyrI2CBus", I2CBus, cg.Component)
+LinuxI2CBus = i2c_ns.class_("LinuxI2CBus", InternalI2CBus, cg.Component)
 I2CDevice = i2c_ns.class_("I2CDevice")
 
 
 CONF_SDA_PULLUP_ENABLED = "sda_pullup_enabled"
 CONF_SCL_PULLUP_ENABLED = "scl_pullup_enabled"
+CONF_BUS_NUM = "bus_num"
 MULTI_CONF = True
 
 
@@ -53,6 +56,8 @@ def _bus_declare_type(value):
         return cv.declare_id(IDFI2CBus)(value)
     if CORE.using_zephyr:
         return cv.declare_id(ZephyrI2CBus)(value)
+    if CORE.is_linux:
+        return cv.declare_id(LinuxI2CBus)(value)
     raise NotImplementedError
 
 
@@ -66,11 +71,17 @@ CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
             cv.GenerateID(): _bus_declare_type,
-            cv.Optional(CONF_SDA, default="SDA"): pins.internal_gpio_pin_number,
+            cv.Optional(CONF_SDA, default="SDA"): cv.Any(
+                cv.only_on([PLATFORM_ESP32, PLATFORM_ESP8266, PLATFORM_RP2040, PLATFORM_NRF52]),
+                pins.internal_gpio_pin_number,
+            ),
             cv.SplitDefault(CONF_SDA_PULLUP_ENABLED, esp32_idf=True): cv.All(
                 cv.only_with_esp_idf, cv.boolean
             ),
-            cv.Optional(CONF_SCL, default="SCL"): pins.internal_gpio_pin_number,
+            cv.Optional(CONF_SCL, default="SCL"): cv.Any(
+                cv.only_on([PLATFORM_ESP32, PLATFORM_ESP8266, PLATFORM_RP2040, PLATFORM_NRF52]),
+                pins.internal_gpio_pin_number,
+            ),
             cv.SplitDefault(CONF_SCL_PULLUP_ENABLED, esp32_idf=True): cv.All(
                 cv.only_with_esp_idf, cv.boolean
             ),
@@ -80,6 +91,7 @@ CONFIG_SCHEMA = cv.All(
                 esp8266="50kHz",
                 rp2040="50kHz",
                 nrf52="100kHz",
+                linux="100kHz",
             ): cv.All(
                 cv.frequency,
                 cv.Range(min=0, min_included=False),
@@ -89,9 +101,13 @@ CONFIG_SCHEMA = cv.All(
                 cv.positive_time_period,
             ),
             cv.Optional(CONF_SCAN, default=True): cv.boolean,
+            cv.SplitDefault(CONF_BUS_NUM, linux=1): cv.All(
+                cv.only_on([PLATFORM_LINUX]),
+                cv.int_range(min=0, max=255),
+            ),
         }
     ).extend(cv.COMPONENT_SCHEMA),
-    cv.only_on([PLATFORM_ESP32, PLATFORM_ESP8266, PLATFORM_RP2040, PLATFORM_NRF52]),
+    cv.only_on([PLATFORM_ESP32, PLATFORM_ESP8266, PLATFORM_RP2040, PLATFORM_NRF52, PLATFORM_LINUX]),
     validate_config,
 )
 
@@ -140,12 +156,17 @@ async def to_code(config):
         var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
 
-    cg.add(var.set_sda_pin(config[CONF_SDA]))
-    if CONF_SDA_PULLUP_ENABLED in config:
-        cg.add(var.set_sda_pullup_enabled(config[CONF_SDA_PULLUP_ENABLED]))
-    cg.add(var.set_scl_pin(config[CONF_SCL]))
-    if CONF_SCL_PULLUP_ENABLED in config:
-        cg.add(var.set_scl_pullup_enabled(config[CONF_SCL_PULLUP_ENABLED]))
+    if CORE.is_linux:
+        # Linux uses /dev/i2c-X device files, no GPIO pins needed
+        cg.add(var.set_bus_num(config[CONF_BUS_NUM]))
+    else:
+        # Other platforms use GPIO pins for I2C
+        cg.add(var.set_sda_pin(config[CONF_SDA]))
+        if CONF_SDA_PULLUP_ENABLED in config:
+            cg.add(var.set_sda_pullup_enabled(config[CONF_SDA_PULLUP_ENABLED]))
+        cg.add(var.set_scl_pin(config[CONF_SCL]))
+        if CONF_SCL_PULLUP_ENABLED in config:
+            cg.add(var.set_scl_pullup_enabled(config[CONF_SCL_PULLUP_ENABLED]))
 
     cg.add(var.set_frequency(int(config[CONF_FREQUENCY])))
     cg.add(var.set_scan(config[CONF_SCAN]))
@@ -257,5 +278,6 @@ FILTER_SOURCE_FILES = filter_source_files_from_platform(
         },
         "i2c_bus_esp_idf.cpp": {PlatformFramework.ESP32_IDF},
         "i2c_bus_zephyr.cpp": {PlatformFramework.NRF52_ZEPHYR},
+        "i2c_bus_linux.cpp": {PlatformFramework.LINUX_NATIVE},
     }
 )
