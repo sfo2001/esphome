@@ -20,6 +20,7 @@ class Platform(StrEnum):
     ESP8266 = "esp8266"
     HOST = "host"
     LIBRETINY_OLDSTYLE = "libretiny"
+    LINUX = "linux"
     LN882X = "ln882x"
     NRF52 = "nrf52"
     RP2040 = "rp2040"
@@ -60,8 +61,9 @@ class PlatformFramework(Enum):
     # Zephyr framework platforms
     NRF52_ZEPHYR = (Platform.NRF52, Framework.ZEPHYR)
 
-    # Host platform (native)
+    # Native platforms
     HOST_NATIVE = (Platform.HOST, Framework.NATIVE)
+    LINUX_NATIVE = (Platform.LINUX, Framework.NATIVE)
 
 
 # Maintain backward compatibility by reassigning after enum definition
@@ -70,6 +72,7 @@ PLATFORM_ESP32 = Platform.ESP32
 PLATFORM_ESP8266 = Platform.ESP8266
 PLATFORM_HOST = Platform.HOST
 PLATFORM_LIBRETINY_OLDSTYLE = Platform.LIBRETINY_OLDSTYLE
+PLATFORM_LINUX = Platform.LINUX
 PLATFORM_LN882X = Platform.LN882X
 PLATFORM_NRF52 = Platform.NRF52
 PLATFORM_RP2040 = Platform.RP2040
