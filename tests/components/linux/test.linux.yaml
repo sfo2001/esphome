@@ -1,0 +1,8 @@
+esphome:
+  name: test_linux_basic
+
+linux:
+  preferences_path: /tmp/esphome-test
+
+logger:
+  level: VERBOSE

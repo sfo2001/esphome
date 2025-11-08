@@ -23,6 +23,7 @@ from esphome.const import (
     PLATFORM_ESP32,
     PLATFORM_ESP8266,
     PLATFORM_HOST,
+    PLATFORM_LINUX,
     PLATFORM_LN882X,
     PLATFORM_NRF52,
     PLATFORM_RP2040,
@@ -755,6 +756,10 @@ class EsphomeCore:
     @property
     def is_host(self):
         return self.target_platform == PLATFORM_HOST
+
+    @property
+    def is_linux(self):
+        return self.target_platform == PLATFORM_LINUX
 
     @property
     def target_framework(self):
