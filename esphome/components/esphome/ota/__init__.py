@@ -126,6 +126,7 @@ CONFIG_SCHEMA = cv.All(
                 ln882x=8820,
                 rtl87xx=8892,
                 host=3232,
+                linux=3232,
             ): cv.port,
             cv.Optional(CONF_PASSWORD): cv.string,
             cv.Optional(CONF_NUM_ATTEMPTS): cv.invalid(

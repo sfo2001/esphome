@@ -98,7 +98,8 @@ std::string LinuxOTABackend::get_next_version_path_() {
     version_num = static_cast<int>(parsed);
   }
 
-  int next_version = version_num + 1;
+  // Wrap at 999 to maintain 3-digit format
+  int next_version = (version_num + 1) % 1000;
 
   // Format as 3-digit version (001, 002, etc.)
   char version_buf[16];
