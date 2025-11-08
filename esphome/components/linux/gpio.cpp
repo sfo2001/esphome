@@ -57,7 +57,6 @@ void LinuxGPIOPin::release_line_() {
 
 void LinuxGPIOPin::setup() {
   if (!this->open_chip_()) {
-    this->mark_failed();
     return;
   }
 
@@ -160,13 +159,18 @@ void LinuxGPIOPin::digital_write(bool value) {
   }
 }
 
-std::string LinuxGPIOPin::dump_summary() {
+std::string LinuxGPIOPin::dump_summary() const {
   char buffer[64];
   snprintf(buffer, sizeof(buffer), "GPIO%u (%s)", this->pin_, this->chip_name_.c_str());
   return std::string(buffer);
 }
 
-void LinuxGPIOPin::detach_interrupt() {
+void LinuxGPIOPin::attach_interrupt(void (*func)(void *), void *arg, gpio::InterruptType type) const {
+  // Interrupts not yet implemented for Linux platform
+  ESP_LOGW(TAG, "GPIO interrupts not yet implemented on Linux platform");
+}
+
+void LinuxGPIOPin::detach_interrupt() const {
   // Interrupts not yet implemented for Linux platform
   ESP_LOGW(TAG, "GPIO interrupts not yet implemented on Linux platform");
 }

@@ -21,15 +21,19 @@ class LinuxGPIOPin : public InternalGPIOPin {
   void pin_mode(gpio::Flags flags) override;
   bool digital_read() override;
   void digital_write(bool value) override;
-  std::string dump_summary() override;
-  void detach_interrupt() override;
+  std::string dump_summary() const override;
+  void detach_interrupt() const override;
   ISRInternalGPIOPin to_isr() const override;
 
   uint8_t get_pin() const { return this->pin_; }
+  gpio::Flags get_flags() const override { return this->flags_; }
+  bool is_inverted() const override { return this->inverted_; }
 
-  ~LinuxGPIOPin() override;
+  ~LinuxGPIOPin();
 
  protected:
+  void attach_interrupt(void (*func)(void *), void *arg, gpio::InterruptType type) const override;
+
   /// Open the GPIO chip and get the line handle
   bool open_chip_();
   /// Release the GPIO line if it's currently requested

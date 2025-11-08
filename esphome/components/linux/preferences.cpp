@@ -31,10 +31,10 @@ void LinuxPreferences::setup_() {
   this->filename_ = prefs_path;
 
   // Create directory if it doesn't exist
-  try {
-    fs::create_directories(this->filename_);
-  } catch (const std::exception &e) {
-    ESP_LOGE(TAG, "Failed to create preferences directory '%s': %s", this->filename_.c_str(), e.what());
+  std::error_code ec;
+  fs::create_directories(this->filename_, ec);
+  if (ec) {
+    ESP_LOGE(TAG, "Failed to create preferences directory '%s': %s", this->filename_.c_str(), ec.message().c_str());
     ESP_LOGE(TAG, "You may need to create the directory manually or run with appropriate permissions");
     this->setup_complete_ = true;
     return;
