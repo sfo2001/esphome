@@ -6,7 +6,7 @@
 #include <map>
 
 namespace esphome {
-namespace linux {
+namespace esphome_linux {
 
 class LinuxPreferenceBackend : public ESPPreferenceBackend {
  public:
@@ -62,7 +62,7 @@ class LinuxPreferences : public ESPPreferences {
 void setup_preferences();
 extern LinuxPreferences *linux_preferences;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
-}  // namespace linux
+}  // namespace esphome_linux
 }  // namespace esphome
 
 #endif  // USE_LINUX

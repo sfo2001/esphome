@@ -7,7 +7,7 @@
 #include <cstring>
 
 namespace esphome {
-namespace linux {
+namespace esphome_linux {
 
 static const char *const TAG = "linux.gpio";
 
@@ -176,7 +176,7 @@ ISRInternalGPIOPin LinuxGPIOPin::to_isr() const {
   return ISRInternalGPIOPin(nullptr);
 }
 
-}  // namespace linux
+}  // namespace esphome_linux
 }  // namespace esphome
 
 #endif  // USE_LINUX

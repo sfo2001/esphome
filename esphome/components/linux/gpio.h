@@ -7,7 +7,7 @@
 #include <string>
 
 namespace esphome {
-namespace linux {
+namespace esphome_linux {
 
 /// @brief GPIO pin implementation for Linux using libgpiod
 class LinuxGPIOPin : public InternalGPIOPin {
@@ -44,7 +44,7 @@ class LinuxGPIOPin : public InternalGPIOPin {
   bool line_requested_{false};
 };
 
-}  // namespace linux
+}  // namespace esphome_linux
 }  // namespace esphome
 
 #endif  // USE_LINUX
