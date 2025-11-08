@@ -1,0 +1,25 @@
+esphome:
+  name: test-ota-linux
+
+linux:
+  preferences_path: /tmp/esphome-test
+  binary_path: /tmp/esphome-test/test_ota_linux
+
+logger:
+  level: VERBOSE
+
+# Fake network component for now (Linux doesn't have real network yet)
+# But we need it for OTA to work
+wifi:
+  ssid: "fake"
+  password: "fake"
+  # This won't actually do anything on Linux, but satisfies the dependency
+
+# Enable OTA
+ota:
+  - platform: esphome
+    password: "test123"
+
+# Enable API for testing
+api:
+  password: "test123"
