@@ -249,12 +249,12 @@ ESPHome already had excellent platform abstractions:
 
 ---
 
-## 🔧 Phase 9.5: Linux Deployment Strategies (IN PROGRESS)
+## ✅ Phase 9.5: Linux Deployment Strategies (COMPLETE)
 
 **Goal**: Streamline initial deployment to Linux systems
 **Duration**: 2-3 days
 **Hardware**: Raspberry Pi or any Linux system
-**Status**: 🔧 Phase 9.5.1 complete, Phase 9.5.2 pending
+**Status**: ✅ Complete - Both Phase 9.5.1 and 9.5.2 implemented
 
 ### Overview
 Unlike embedded platforms that require USB serial flashing, Linux deployment can be more streamlined using SSH. This phase proposes two approaches to improve the deployment experience.
@@ -294,11 +294,20 @@ esphome prepare-linux mydevice.yaml
 # Creates mydevice-deploy/ with binary, install.sh, service file, and README
 ```
 
-**Phase 9.5.2**: ⏳ SSH deploy integration (PENDING)
-- ⏳ Integrate with `esphome run --device ssh://...`
-- ⏳ Automatic binary deployment via SSH
-- ⏳ Log streaming like serial monitor
-- ⏳ Matches ESP32 UX perfectly
+**Phase 9.5.2**: ✅ SSH deploy integration (COMPLETE)
+- ✅ Integrate with `esphome run --device ssh://...`
+- ✅ Automatic binary deployment via SSH
+- ✅ Log streaming via journalctl
+- ✅ Matches ESP32 UX perfectly
+
+Usage:
+```bash
+# First deployment - SSH-based (like USB serial for ESP32)
+esphome run mydevice.yaml --device ssh://pi@raspberrypi
+
+# Subsequent updates - OTA (like ESP32)
+esphome run mydevice.yaml --device 192.168.1.100
+```
 
 ### Current State (Manual)
 Users must:
