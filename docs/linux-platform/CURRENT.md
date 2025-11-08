@@ -10,6 +10,56 @@ This document provides quick links to the currently active implementation phases
 
 ---
 
+## ✅ Recently Completed Phases
+
+### Phase 8: OTA Updates Implementation
+**Status**: ✅ **COMPLETE** - Code merged and functional
+
+**What Was Built**:
+- ✅ LinuxOTABackend class with versioned binary support
+- ✅ Atomic symlink switching for updates
+- ✅ MD5 verification before applying
+- ✅ Automatic version cleanup (keeps last 2)
+- ✅ Systemd service templates and installation scripts
+- ✅ Exception-safe parsing (compatible with `-fno-exceptions`)
+
+**What's Pending**:
+- ⏳ Hardware testing on Raspberry Pi (requires network)
+
+**Merged**: PR #11
+**Commit**: `3b986ff5e` - feat(linux): add OTA update support with versioned binaries
+
+[📄 View Details →](implementation/phase-8-ota-updates.md)
+
+---
+
+### Phase 9: Network Support
+**Status**: ✅ **COMPLETE** - Network layer functional
+
+**What Was Built**:
+- ✅ LinuxTCPServer class for bind/listen/accept operations
+- ✅ LinuxTCPClient class for TCP connections
+- ✅ LinuxUDPSocket class for future mDNS support
+- ✅ Network utilities (IP detection using getifaddrs)
+- ✅ Integration with existing ESPHome network abstraction
+- ✅ IPv4/IPv6 dual-stack support with POSIX sockets
+
+**Architecture Discovery**:
+- ESPHome already had excellent platform abstractions
+- Socket abstraction layer automatically uses BSD sockets on Linux
+- OTA and API components work on Linux without modification
+- Only needed to implement Linux-specific network utilities
+
+**What's Pending**:
+- ⏳ Hardware testing on Raspberry Pi
+
+**Merged**: PR #12
+**Commit**: `69e88c7f3` - feat(linux): implement Phase 9 network support for OTA and API
+
+[📄 View Details →](implementation/phase-9-network-support.md)
+
+---
+
 ## 🔧 Active Phases - Hardware Testing Needed
 
 These phases have code complete but require Raspberry Pi hardware for validation:
@@ -65,96 +115,138 @@ These phases have code complete but require Raspberry Pi hardware for validation
 
 ---
 
-## 📝 Active Phase - Implementation Ready
+## 📝 Proposed Enhancement - Optional UX Improvement
 
-This phase has completed architecture design and is ready for implementation:
+### Phase 9.5: Linux Deployment Strategies
+**Status**: 📝 Design Complete - Optional Enhancement
 
-### Phase 8: OTA Updates Implementation
-**Status**: 📝 Architecture Designed - Ready to Implement
+**Purpose**: Streamline initial deployment to Linux systems via SSH
 
-**What's Done**:
-- ✅ Architecture designed (versioned binaries with symlink)
-- ✅ Update process flow documented
-- ✅ Security considerations analyzed
-- ✅ Systemd integration planned
+**Proposed Approaches**:
+1. **`prepare-linux` command** - Generate deployment package (quick win)
+2. **SSH deploy integration** - `esphome run --device ssh://pi@raspberrypi` (long-term)
 
-**What's Needed**:
-- ⏳ Implement LinuxOTABackend class
-- ⏳ Implement version management logic
-- ⏳ Create systemd service templates
-- ⏳ Write installation scripts
-- ⏳ Test on x86_64 and Raspberry Pi
+**Current State**: Manual deployment works but requires multiple steps
 
-[📄 View Details →](implementation/phase-8-ota-updates.md)
+**Note**: This is an optional UX improvement. Core functionality (OTA) is already working.
+
+[📄 View Details →](implementation/phase-9.5-linux-deployment.md)
 
 ---
 
 ## Next Actions
 
-### Option A: Hardware Testing Path (Recommended if Pi available)
+### Priority 1: Hardware Testing (Primary Focus)
 
-1. **Setup Raspberry Pi 5**
+**Network + OTA are complete!** Now we need to validate everything on actual hardware.
+
+1. **Setup Raspberry Pi 5 or Pi 3**
    - Install ESPHome development environment
    - Enable I2C, GPIO, SPI interfaces
    - Add user to hardware groups
+   - Configure network connectivity
 
-2. **Test Phase 3 (I2C)**
+2. **Test Network + OTA Integration**
+   - Deploy test binary to Raspberry Pi
+   - Verify network utilities detect IP address
+   - Test OTA update over network
+   - Validate version management and symlink switching
+   - Test systemd service restart mechanism
+
+3. **Test Phase 3 (I2C)**
    - Connect I2C sensor (BME280, ADS1115)
    - Run test configuration
    - Validate I2C scan and communication
 
-3. **Test Phase 4 (GPIO)**
+4. **Test Phase 4 (GPIO)**
    - Connect LED to GPIO 27
    - Connect button to GPIO 17
    - Validate input/output, pull-up/pull-down
 
-4. **Test Phase 5 (SPI)**
+5. **Test Phase 5 (SPI)**
    - Connect SPI display or sensor
    - Validate SPI communication
    - Test multiple SPI devices
 
-5. **Fix any issues found** and update code
+6. **Integration Testing (Phase 6)**
+   - Compile configuration with I2C + GPIO + SPI + OTA + API
+   - Test all components working simultaneously
+   - Validate performance and stability
+   - Test OTA updates with all components active
+   - Test API connection from Home Assistant
 
-### Option B: OTA Implementation Path (Can do without hardware)
+### Priority 2: Optional UX Improvements
 
-1. **Implement LinuxOTABackend**
-   - Create ota_backend_linux.h and .cpp
-   - Implement version management
-   - Implement symlink switching
+If time permits and after hardware validation:
 
-2. **Test on x86_64**
-   - Create test binary
-   - Test OTA update process
-   - Validate version cleanup
+1. **Implement Phase 9.5.1** (`prepare-linux` command)
+   - Generate deployment package
+   - Self-contained installer script
+   - Better than manual deployment
 
-3. **Create deployment tools**
-   - Systemd service generator
-   - Installation script
-   - Test on development server
-
-4. **Later: Test on Raspberry Pi**
-   - After hardware validation of Phases 3-5
-   - Full OTA integration test
-
-### Option C: Parallel Development (Best if multiple people)
-
-- **Person A**: Hardware testing (Phases 3-5)
-- **Person B**: OTA implementation (Phase 8)
-- **Converge**: Integration testing (Phase 6)
+2. **Consider Phase 9.5.2** (SSH deploy integration)
+   - Integrate with `esphome run --device ssh://...`
+   - Automatic binary deployment via SSH
+   - Matches ESP32 UX perfectly
 
 ---
 
-## Blocking Issues
+## Status Dashboard
+
+| Component | Code | Compilation | Network | Hardware Test | Integration |
+|-----------|------|-------------|---------|---------------|-------------|
+| Platform Foundation | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Preferences | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Network Support | ✅ | ✅ | ✅ | ⏳ | ⏳ |
+| OTA Updates | ✅ | ✅ | ✅ | ⏳ | ⏳ |
+| I2C | ✅ | ✅ | N/A | ⏳ | ⏳ |
+| GPIO | ✅ | ✅ | N/A | ⏳ | ⏳ |
+| SPI | ✅ | ✅ | N/A | ⏳ | ⏳ |
+
+**Legend**:
+- ✅ Complete
+- ⏳ Pending
+- N/A - Not applicable
+- ❌ Blocked
+
+---
+
+## Resolved Blockers ✅
+
+### ~~Phase 9 (Network): CRITICAL blocker~~
+- **Was Blocking**: OTA and API functionality
+- **Resolution**: ✅ **RESOLVED** - Network layer implemented and functional
+  - Network utilities implemented using getifaddrs()
+  - OTA and API can now receive connections over network
+  - Remote management now possible
+
+---
+
+## Current Blockers
 
 ### Hardware Access Required
-- **Blocker**: Phases 3-5 require Raspberry Pi for testing
-- **Impact**: Cannot validate I2C, GPIO, SPI implementations
+- **Blocker**: Phases 3-5 and OTA/Network require Raspberry Pi for testing
+- **Impact**: Cannot validate hardware implementations
 - **Resolution**: Obtain Raspberry Pi 5 or Pi 3 for testing
+- **Note**: All code is complete and compiles successfully
 
-### No Current Blockers for Phase 8
-- OTA implementation can proceed independently
-- Can be developed and tested on x86_64 first
-- Raspberry Pi integration can happen later
+---
+
+## Key Implementation Files
+
+### OTA Backend (Phase 8)
+- `esphome/components/ota/ota_backend_linux.h`
+- `esphome/components/ota/ota_backend_linux.cpp`
+- `esphome/components/ota/__init__.py` (backend registration)
+
+### Network Layer (Phase 9)
+- `esphome/components/network/linux_network.h`
+- `esphome/components/network/linux_network.cpp`
+- `esphome/components/network/util.cpp` (network utilities integration)
+
+### Test Configurations
+- `tests/components/linux/test_ota.linux.yaml`
+- `tests/components/linux/test_network.linux.yaml`
 
 ---
 
@@ -167,23 +259,4 @@ This phase has completed architecture design and is ready for implementation:
 
 ---
 
-## Status Dashboard
-
-| Component | Code | Compilation | Hardware Test | Integration |
-|-----------|------|-------------|---------------|-------------|
-| Platform Foundation | ✅ | ✅ | ✅ | ✅ |
-| Preferences | ✅ | ✅ | ✅ | ✅ |
-| I2C | ✅ | ✅ | ⏳ | ⏳ |
-| GPIO | ✅ | ✅ | ⏳ | ⏳ |
-| SPI | ✅ | ✅ | ⏳ | ⏳ |
-| OTA | 📝 | ⏳ | ⏳ | ⏳ |
-
-**Legend**:
-- ✅ Complete
-- ⏳ Pending
-- 📝 Designed
-- ❌ Blocked
-
----
-
-**👉 Start Here**: Choose Option A, B, or C above based on available resources and priorities.
+**👉 Start Here**: Focus on **Priority 1: Hardware Testing** to validate all completed implementations on Raspberry Pi.
