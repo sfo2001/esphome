@@ -21,9 +21,15 @@ This document provides a high-level overview of all implementation phases. For d
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  ACTIVE - ARCHITECTURE DESIGNED                             │
+│  COMPLETED - NEEDS NETWORK SUPPORT                          │
 ├─────────────────────────────────────────────────────────────┤
 │  Phase 8: OTA Updates Implementation                        │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│  PENDING - CRITICAL BLOCKER                                 │
+├─────────────────────────────────────────────────────────────┤
+│  Phase 9: Network Support (TCP/IP Stack)                    │
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -169,33 +175,75 @@ This document provides a high-level overview of all implementation phases. For d
 
 ---
 
-## 📝 Phase 8: OTA Updates (ARCHITECTURE DESIGNED)
+## ✅ Phase 8: OTA Updates (COMPLETED - NEEDS NETWORK)
 
 **Goal**: Over-the-air firmware updates
 **Duration**: 2-3 days
 **Hardware**: AMD server + Raspberry Pi
-**Status**: 📝 Architecture documented, ready to implement
+**Status**: ✅ Implementation complete, requires Phase 9 (network) to function
 
-### Architecture
-- **Versioned binaries**: mydevice.001, mydevice.002, etc.
-- **Symlink switching**: Atomic updates via symlink rename
-- **Systemd integration**: Auto-restart with new version
-- **Version cleanup**: Keep last N versions for rollback
-
-### What Needs to Be Built
-- LinuxOTABackend class
-- Version management logic
-- Symlink update mechanism
-- Systemd service templates
-- Installation scripts
-
-### Key Design Points
-- Same OTA protocol as ESP platforms (port 3232)
+### What Was Built
+- LinuxOTABackend class with versioned binary support
+- Atomic symlink switching for updates
 - MD5 verification before applying
-- Manual rollback capability
-- No dual-partition complexity
+- Automatic version cleanup (keeps last 2)
+- Systemd service templates and installation scripts
+
+### Key Files
+- `esphome/components/ota/ota_backend_linux.h`
+- `esphome/components/ota/ota_backend_linux.cpp`
+- `scripts/linux/generate-systemd-service.py`
+- `scripts/linux/install-service.sh`
+
+### What's Pending
+- ⏳ **Network support required** (Phase 9) for OTA to function
+- ⏳ Hardware testing on Raspberry Pi after network implementation
+
+### Deliverables
+- ✅ OTA backend compiles successfully
+- ✅ Version management and symlink logic implemented
+- ✅ MD5 verification working
+- ✅ Systemd integration scripts created
+- ❌ **Cannot test without network layer**
 
 [Details →](implementation/phase-8-ota-updates.md)
+
+---
+
+## ⏳ Phase 9: Network Support (PENDING - CRITICAL BLOCKER)
+
+**Goal**: Enable network connectivity for OTA and API
+**Duration**: 3-5 days
+**Hardware**: AMD server + Raspberry Pi
+**Status**: ⏳ Not started, blocks OTA and API functionality
+
+### Architecture
+- **POSIX sockets**: Use standard Linux socket API
+- **No WiFi management**: Assume network configured by OS
+- **TCP Server/Client**: For OTA (port 3232) and API (port 6053)
+- **IPv4 + IPv6 support**: Work with both protocols
+- **Non-blocking I/O**: Asynchronous operations
+
+### What Needs to Be Built
+- LinuxTCPServer class (bind, listen, accept)
+- LinuxTCPClient class (connect, read, write)
+- LinuxUDPSocket class (for future mDNS)
+- Network utilities (IP detection, hostname)
+- Integration with OTA and API components
+
+### Key Design Points
+- Assumes network already configured (NetworkManager, systemd-networkd)
+- Uses kernel TCP/IP stack (no custom implementation)
+- Interface agnostic (works with eth0, wlan0, any interface)
+- Bind to all interfaces (IPv6 :: with IPv4-mapped support)
+
+### Blocked Features
+- ❌ OTA uploads (requires TCP on port 3232)
+- ❌ API connections (requires TCP on port 6053)
+- ❌ Home Assistant integration (requires API)
+- ❌ Remote logging (requires API)
+
+[Details →](implementation/phase-9-network-support.md)
 
 ---
 
@@ -265,7 +313,9 @@ Phase 3 (I2C) ─┐
 Phase 4 (GPIO) ┼─→ Phase 6 (Integration) → Phase 7 (Documentation)
 Phase 5 (SPI) ─┘
     ↓
-Phase 8 (OTA) ──→ (Can be done in parallel with Phase 6/7)
+Phase 8 (OTA) ──→ Phase 9 (Network) ──→ CRITICAL for OTA/API functionality
+    ↓                                      (blocks remote management)
+Phase 6 (Integration Testing) requires all phases 3-5 + 9
 ```
 
 ## Timeline Estimate
@@ -274,43 +324,51 @@ Phase 8 (OTA) ──→ (Can be done in parallel with Phase 6/7)
 |-------|--------|--------------------------|
 | 1-2   | ✅ Complete | 0 days |
 | 3-5   | 🔧 Testing | 1-2 days (hardware testing) |
-| 8     | 📝 Designed | 2-3 days (implementation) |
-| 6     | ⏳ Pending | 1-2 days |
+| 8     | ✅ Complete | 0 days (needs Phase 9 to function) |
+| 9     | ⏳ Pending | 3-5 days (CRITICAL - blocks OTA/API) |
+| 6     | ⏳ Pending | 1-2 days (after Phase 9) |
 | 7     | ⏳ Pending | 1-2 days |
-| **Total** | | **5-9 days remaining** |
+| **Total** | | **6-12 days remaining** |
 
 *Note: Timeline assumes Raspberry Pi hardware is available for testing*
 
 ## Blocking Issues
 
 ### Current Blockers
-- **Hardware Access**: Phases 3-6 require Raspberry Pi for testing
-- **None for Phase 8**: OTA implementation can proceed independently
+- **Phase 9 (Network)**: CRITICAL blocker for OTA and API functionality
+  - OTA backend complete but cannot receive updates without network
+  - API component compiles but cannot accept connections
+  - Remote management impossible without network layer
+
+- **Hardware Access**: Phases 3-5 require Raspberry Pi for testing
+  - Can proceed in parallel with Phase 9 implementation
 
 ### Resolution
-- Phase 8 can be implemented and tested on x86_64 first
-- Hardware testing can be batched (test phases 3-5 together)
-- Integration testing (Phase 6) requires all previous phases working
+- **Priority 1**: Implement Phase 9 (Network Support) - enables remote management
+- **Priority 2**: Hardware testing of Phases 3-5 (I2C, GPIO, SPI)
+- **Priority 3**: Integration testing (Phase 6) after Phases 3-5 and 9 complete
 
 ## Next Actions
 
-1. **Option A: Hardware Testing Path**
+1. **Option A: Network Implementation Path** (Recommended - Unblocks OTA/API)
+   - Implement Phase 9 (Network Support)
+   - Start with LinuxTCPServer and LinuxTCPClient classes
+   - Integrate with OTA component for remote updates
+   - Integrate with API component for Home Assistant
+   - Test on x86_64 and Raspberry Pi
+
+2. **Option B: Hardware Testing Path** (Can run in parallel)
    - Setup Raspberry Pi 5 with ESPHome environment
    - Test Phase 3 (I2C) with real sensors
    - Test Phase 4 (GPIO) with LED/button
    - Test Phase 5 (SPI) with display
-   - Proceed to Phase 6 integration testing
-
-2. **Option B: OTA Implementation Path**
-   - Implement LinuxOTABackend
-   - Create systemd service templates
-   - Test OTA on x86_64 development server
-   - Test OTA on Raspberry Pi after hardware validation
+   - Verify all hardware components work
 
 3. **Option C: Parallel Path** (Recommended if multiple developers)
-   - One person: Hardware testing (Phases 3-5)
-   - Another person: OTA implementation (Phase 8)
-   - Converge for integration testing (Phase 6)
+   - **Developer 1**: Network implementation (Phase 9) - CRITICAL
+   - **Developer 2**: Hardware testing (Phases 3-5)
+   - **Converge**: Integration testing (Phase 6) with network + hardware
+   - **Final**: Documentation and polish (Phase 7)
 
 ---
 
