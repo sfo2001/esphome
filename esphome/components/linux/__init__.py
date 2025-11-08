@@ -21,6 +21,7 @@ IS_TARGET_PLATFORM = True
 
 CONF_PREFERENCES_PATH = "preferences_path"
 CONF_GPIO_CHIP = "gpio_chip"
+CONF_BINARY_PATH = "binary_path"
 
 
 def set_core_data(config):
@@ -28,6 +29,8 @@ def set_core_data(config):
         CONF_PREFERENCES_PATH: config[CONF_PREFERENCES_PATH],
         CONF_GPIO_CHIP: config[CONF_GPIO_CHIP],
     }
+    if CONF_BINARY_PATH in config:
+        CORE.data[KEY_LINUX][CONF_BINARY_PATH] = config[CONF_BINARY_PATH]
     CORE.data[KEY_CORE][KEY_TARGET_PLATFORM] = PLATFORM_LINUX
     CORE.data[KEY_CORE][KEY_TARGET_FRAMEWORK] = "native"
     CORE.data[KEY_CORE][KEY_FRAMEWORK_VERSION] = cv.Version(1, 0, 0)
@@ -41,6 +44,7 @@ CONFIG_SCHEMA = cv.All(
                 CONF_PREFERENCES_PATH, default="/var/lib/esphome"
             ): cv.string,
             cv.Optional(CONF_GPIO_CHIP, default="gpiochip0"): cv.string,
+            cv.Optional(CONF_BINARY_PATH): cv.string,
         }
     ),
     set_core_data,
@@ -64,6 +68,10 @@ async def to_code(config):
 
     # Add GPIO chip name define
     cg.add_define("ESPHOME_GPIO_CHIP", config[CONF_GPIO_CHIP])
+
+    # Add binary path define (for OTA updates)
+    if CONF_BINARY_PATH in config:
+        cg.add_define("ESPHOME_BINARY_PATH", config[CONF_BINARY_PATH])
 
     # Setup preferences
     cg.add(linux_ns.setup_preferences())

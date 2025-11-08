@@ -1,0 +1,22 @@
+esphome:
+  name: test-ota-linux
+
+linux:
+  preferences_path: /tmp/esphome-test
+  binary_path: /tmp/esphome-test/test_ota_linux
+
+logger:
+  level: VERBOSE
+
+# TODO: Network components not yet implemented for Linux platform
+# OTA and API require network support which will be added in future phases
+# For now, this test validates compilation only
+
+# Enable OTA
+ota:
+  - platform: esphome
+    password: "test123"
+
+# Enable API for testing
+api:
+  password: "test123"
