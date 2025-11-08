@@ -1,5 +1,18 @@
 # Linux Platform Implementation Roadmap
 
+> **⚠️ DEPRECATION NOTICE**
+>
+> This file has been reorganized for better navigation. Please use the new structure:
+>
+> - **📋 Start Here**: [linux-platform/README.md](linux-platform/README.md)
+> - **🗺️ Overview**: [linux-platform/ROADMAP.md](linux-platform/ROADMAP.md)
+> - **🚀 Current Work**: [linux-platform/CURRENT.md](linux-platform/CURRENT.md)
+> - **📚 Implementation Details**: [linux-platform/implementation/](linux-platform/implementation/)
+>
+> This file is kept for reference but is no longer actively maintained.
+
+---
+
 **Project**: Add Linux (Raspberry Pi) as ESPHome target platform
 **Branch**: `feature/linux-platform`
 **Base**: `dev` branch
