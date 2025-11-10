@@ -56,7 +56,8 @@ async def to_code(config):
     cg.add_build_flag("-std=gnu++20")
     cg.add_define("ESPHOME_BOARD", "linux")
     cg.add_define(ThreadModel.MULTI_ATOMICS)
-    cg.add_platformio_option("platform", "platformio/native")
+    # Use platform-linux_arm for ARM compilation support (Raspberry Pi, etc.)
+    cg.add_platformio_option("platform", "https://github.com/sfo2001/platform-linux_arm.git")
     cg.add_platformio_option("lib_ldf_mode", "off")
     cg.add_platformio_option("lib_compat_mode", "strict")
 
