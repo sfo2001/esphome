@@ -65,7 +65,7 @@
 - [ ] **Add inline comments to C++ code**:
   - [ ] `i2c_bus_linux.cpp` - explain i2c-dev usage
   - [ ] `gpio_linux.cpp` - explain libgpiod API
-  - [ ] `preferences.cpp` - explain file storage format
+  - [x] `preferences.cpp` - explain file storage format ✅
 
 - [ ] **Add Python docstrings**:
   - [ ] `esphome/components/linux/__init__.py`
