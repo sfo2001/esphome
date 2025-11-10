@@ -1,0 +1,8 @@
+esphome:
+  name: test_linux_preferences
+
+linux:
+  preferences_path: /tmp/esphome-prefs-test
+
+logger:
+  level: DEBUG

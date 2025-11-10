@@ -1,0 +1,23 @@
+esphome:
+  name: test-ota-linux
+
+linux:
+  preferences_path: /tmp/esphome-test
+  binary_path: /tmp/esphome-test/test_ota_linux
+
+logger:
+  level: VERBOSE
+
+# Network component - automatically configured for Linux
+# Uses BSD sockets implementation
+network:
+
+# Enable OTA
+ota:
+  - platform: esphome
+    port: 3232
+    password: "test123"
+
+# Enable API for testing
+api:
+  password: "test123"

@@ -1,0 +1,14 @@
+esphome:
+  name: test_linux_i2c
+
+linux:
+  preferences_path: /tmp/esphome-test-i2c
+
+logger:
+  level: VERBOSE
+
+i2c:
+  id: i2c_bus
+  bus_num: 1
+  frequency: 100kHz
+  scan: true
