@@ -142,48 +142,30 @@ network:
 
 ---
 
-### 3. Unused Network Classes Cleanup
+### 3. Unused Network Classes Cleanup ✅ **COMPLETED**
 
-**Priority**: Low
-**Effort**: ~30 minutes
-**Location**: `esphome/components/network/linux_network.h`, `linux_network.cpp`
+**Status**: ✅ **COMPLETED** - 2025-11-10
+**Commit**: `8e79c762` - refactor(linux): remove unused network socket classes
 
-**Current State**:
-- `LinuxTCPServer`, `LinuxTCPClient`, `LinuxUDPSocket` classes implemented (~500 lines)
+**What Was Done**:
+- ✅ Removed `LinuxTCPServer`, `LinuxTCPClient`, `LinuxUDPSocket` classes
+- ✅ Removed 397 lines of dead code (335 from .cpp, 62 from .h)
+- ✅ Cleaned up unnecessary includes (fcntl.h, unistd.h, netinet/in.h)
+- ✅ Preserved LinuxNetwork utility class (still used)
+
+**Resolution**: Implemented **Option A (Remove)** as recommended
+- ESPHome's BSD socket abstraction works perfectly on Linux
+- OTA and API components use existing platform abstractions
+- Dead code removed, maintenance burden reduced
+- Implementation preserved in git history if ever needed
+
+**Previous State**:
+- `LinuxTCPServer`, `LinuxTCPClient`, `LinuxUDPSocket` classes implemented (~400 lines)
 - **Not used anywhere** in the codebase
 - ESPHome uses existing BSD socket abstraction instead
 
-**Issue**:
+**Previous Issue**:
 These classes were created expecting OTA/API would need custom Linux networking, but ESPHome's excellent platform abstraction made them unnecessary.
-
-**Options**:
-
-**Option A: Remove** (Recommended)
-```cpp
-// Remove classes entirely from linux_network.h and linux_network.cpp
-// Keep only LinuxNetwork utility class
-```
-- Pros: Removes dead code, reduces maintenance
-- Cons: Need to re-implement if future components need them
-
-**Option B: Document as Reserved**
-```cpp
-/// TCP Server for Linux platform
-/// NOTE: Currently unused - ESPHome uses BSD socket abstraction.
-///       Reserved for future mDNS or custom protocol implementations.
-class LinuxTCPServer {
-    // ... existing implementation ...
-};
-```
-- Pros: Available if needed, shows design work
-- Cons: Maintains dead code
-
-**Option C: Move to Examples**
-Move to `docs/linux-platform/examples/network_classes.cpp` with documentation:
-- Pros: Preserves implementation for reference
-- Cons: Still in codebase but harder to find
-
-**Recommendation**: Option A (remove) - can be restored from git history if needed.
 
 ---
 
@@ -457,9 +439,10 @@ const char *get_use_address() {
 
 ## Summary Priority List
 
-### Must Fix Before Release (Already Done ✅)
+### Completed ✅
 1. ✅ Add `linux=3232` to OTA port configuration
 2. ✅ Fix version rollover at 999
+3. ✅ **Unused network classes cleanup** (commit `8e79c762`)
 
 ### High Priority (Improve UX)
 None currently - implementations are production-ready
@@ -471,7 +454,6 @@ None currently - implementations are production-ready
 ### Low Priority (Nice to Have)
 1. Multi-homed system IP selection (1 hour)
 2. Enhanced permission error handling (30 min)
-3. Unused network classes cleanup (30 min)
 
 ### Very Low Priority (Optional Polish)
 1. Cleanup timing optimization (15 min) - current approach is actually safer
