@@ -71,11 +71,11 @@
   - [ ] `esphome/components/linux/__init__.py`
   - [ ] `esphome/components/linux/gpio.py`
 
-- [ ] **Update CLAUDE.md** (this repository):
-  - [ ] Add Linux platform to platform list
-  - [ ] Document Linux-specific development workflow
-  - [ ] Add native compilation instructions
-  - [ ] Update testing instructions
+- [x] **Update CLAUDE.md** (this repository):
+  - [x] Add Linux platform to platform list
+  - [x] Document Linux-specific development workflow
+  - [x] Add native compilation instructions
+  - [x] Update testing instructions
 
 #### Example Configurations
 
