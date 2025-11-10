@@ -2,76 +2,36 @@
 
 This document tracks non-critical enhancements and improvements identified during code review but not required for initial release.
 
-**Last Updated**: 2025-11-08
+**Last Updated**: 2025-11-10
 
 ---
 
 ## Network Implementation Improvements
 
-### 1. IPv6 Support in Network Utilities
+### 1. IPv6 Support in Network Utilities ✅ **COMPLETED**
 
-**Priority**: Medium
-**Effort**: ~2 hours
-**Location**: `esphome/components/network/util.cpp:38-82`
+**Status**: ✅ **COMPLETED** - 2025-11-10
+**Commit**: `5ef69c6e` - feat(linux): add IPv6 support to network utilities
 
-**Current State**:
-- Network server supports IPv4/IPv6 dual-stack (AF_INET6 socket with IPV6_V6ONLY disabled)
-- Network utilities only detect and return IPv4 addresses
-- `get_host_ip_address_()` skips IPv6 addresses
+**What Was Done**:
+- ✅ Added IPv6 address detection alongside existing IPv4 support
+- ✅ Prefers IPv4 addresses when available (maintains backward compatibility)
+- ✅ Falls back to IPv6 on IPv6-only networks
+- ✅ Skips IPv6 loopback (::1) and link-local addresses (fe80::/10)
+- ✅ Added debug logging for discovered IPv4 and IPv6 addresses
 
-**Issue**:
-```cpp
-// Only processes IPv4
-if (ifa->ifa_addr->sa_family == AF_INET) {
-    // ...
-}
-// IPv6 addresses (AF_INET6) are ignored
-```
-
-**Proposed Fix**:
-```cpp
-std::string get_host_ip_address_() {
-    // ... existing code ...
-
-    for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
-        if (ifa->ifa_addr == nullptr) continue;
-
-        // Handle IPv4
-        if (ifa->ifa_addr->sa_family == AF_INET) {
-            // ... existing IPv4 logic ...
-        }
-
-        // Handle IPv6
-        if (ifa->ifa_addr->sa_family == AF_INET6) {
-            struct sockaddr_in6 *addr = (struct sockaddr_in6 *) ifa->ifa_addr;
-
-            // Skip loopback (::1)
-            if (IN6_IS_ADDR_LOOPBACK(&addr->sin6_addr)) continue;
-
-            // Skip link-local (fe80::/10)
-            if (IN6_IS_ADDR_LINKLOCAL(&addr->sin6_addr)) continue;
-
-            char addr_str[INET6_ADDRSTRLEN];
-            inet_ntop(AF_INET6, &addr->sin6_addr, addr_str, sizeof(addr_str));
-
-            ipv6_address = addr_str;
-            // Prefer IPv4 but keep IPv6 as fallback
-        }
-    }
-
-    return !ip_address.empty() ? ip_address : ipv6_address;
-}
-```
-
-**Benefits**:
+**Benefits Achieved**:
 - Full IPv6 support for IPv6-only networks
-- Future-proof for IPv6 adoption
-- Matches server capabilities
+- Future-proof for growing IPv6 adoption
+- Matches the server's dual-stack capabilities
+- Maintains backward compatibility (prefers IPv4)
 
-**Testing Required**:
-- IPv6-only network
-- Dual-stack network (prefer IPv4)
-- IPv4-only network (current behavior)
+**Previous State**:
+- Network server supported IPv4/IPv6 dual-stack (AF_INET6 socket with IPV6_V6ONLY disabled)
+- Network utilities only detected and returned IPv4 addresses
+- `get_host_ip_address_()` skipped IPv6 addresses
+
+**Resolution**: Network utilities now support both IPv4 and IPv6 address detection, with intelligent fallback behavior
 
 ---
 
@@ -443,13 +403,13 @@ const char *get_use_address() {
 1. ✅ Add `linux=3232` to OTA port configuration
 2. ✅ Fix version rollover at 999
 3. ✅ **Unused network classes cleanup** (commit `8e79c762`)
+4. ✅ **IPv6 support in network utilities** (commit `5ef69c6e`)
 
 ### High Priority (Improve UX)
 None currently - implementations are production-ready
 
 ### Medium Priority (Quality Improvements)
-1. IPv6 support in network utilities (2 hours)
-2. Binary path validation and normalization (1 hour)
+1. Binary path validation and normalization (1 hour)
 
 ### Low Priority (Nice to Have)
 1. Multi-homed system IP selection (1 hour)
