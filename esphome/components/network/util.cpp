@@ -34,7 +34,7 @@ namespace network {
 #ifdef USE_HOST
 static const char *const TAG = "network";
 
-// Helper function to get primary IPv4 address on Linux
+// Helper function to get primary IP address on Linux (IPv4 preferred, IPv6 fallback)
 static std::string get_host_ip_address_() {
   struct ifaddrs *ifaddr = nullptr;
   struct ifaddrs *ifa = nullptr;
@@ -43,14 +43,15 @@ static std::string get_host_ip_address_() {
     return "0.0.0.0";
   }
 
-  std::string ip_address;
+  std::string ip_address;      // IPv4 address (preferred)
+  std::string ipv6_address;    // IPv6 address (fallback)
 
   for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
     if (ifa->ifa_addr == nullptr) {
       continue;
     }
 
-    // Look for IPv4 addresses
+    // Look for IPv4 addresses (preferred)
     if (ifa->ifa_addr->sa_family == AF_INET) {
       struct sockaddr_in *addr = (struct sockaddr_in *) ifa->ifa_addr;
 
@@ -68,17 +69,51 @@ static std::string get_host_ip_address_() {
       }
 
       ip_address = addr_str;
-      break;  // Found first valid address
+      ESP_LOGD(TAG, "Found IPv4 address %s on interface %s", addr_str, ifa->ifa_name);
+      break;  // Found valid IPv4, prefer it
+    }
+
+    // Look for IPv6 addresses (fallback)
+    if (ifa->ifa_addr->sa_family == AF_INET6) {
+      struct sockaddr_in6 *addr = (struct sockaddr_in6 *) ifa->ifa_addr;
+
+      // Skip loopback (::1)
+      if (IN6_IS_ADDR_LOOPBACK(&addr->sin6_addr)) {
+        continue;
+      }
+
+      // Skip link-local (fe80::/10)
+      if (IN6_IS_ADDR_LINKLOCAL(&addr->sin6_addr)) {
+        continue;
+      }
+
+      // Skip loopback interface
+      if (strcmp(ifa->ifa_name, "lo") == 0) {
+        continue;
+      }
+
+      char addr_str[INET6_ADDRSTRLEN];
+      inet_ntop(AF_INET6, &addr->sin6_addr, addr_str, sizeof(addr_str));
+
+      // Only save the first valid IPv6 address as fallback
+      if (ipv6_address.empty()) {
+        ipv6_address = addr_str;
+        ESP_LOGD(TAG, "Found IPv6 address %s on interface %s", addr_str, ifa->ifa_name);
+      }
+      // Don't break - keep looking for IPv4
     }
   }
 
   freeifaddrs(ifaddr);
 
-  if (ip_address.empty()) {
-    return "0.0.0.0";
+  // Return IPv4 if found, otherwise IPv6, otherwise "0.0.0.0"
+  if (!ip_address.empty()) {
+    return ip_address;
+  } else if (!ipv6_address.empty()) {
+    ESP_LOGD(TAG, "No IPv4 address found, using IPv6: %s", ipv6_address.c_str());
+    return ipv6_address;
   }
-
-  return ip_address;
+  return "0.0.0.0";
 }
 
 // Static storage for IP address string (for get_use_address() which returns const char*)
