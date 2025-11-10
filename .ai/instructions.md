@@ -4,7 +4,7 @@ This document provides essential context for AI models interacting with this pro
 
 ## 1. Project Overview & Purpose
 
-*   **Primary Goal:** ESPHome is a system to configure microcontrollers (like ESP32, ESP8266, RP2040, and LibreTiny-based chips) using simple yet powerful YAML configuration files. It generates C++ firmware that can be compiled and flashed to these devices, allowing users to control them remotely through home automation systems.
+*   **Primary Goal:** ESPHome is a system to configure microcontrollers and embedded Linux systems (like ESP32, ESP8266, RP2040, LibreTiny-based chips, and Raspberry Pi) using simple yet powerful YAML configuration files. It generates C++ firmware that can be compiled and flashed to these devices, allowing users to control them remotely through home automation systems.
 *   **Business Domain:** Internet of Things (IoT), Home Automation.
 
 ## 2. Core Technologies & Stack
@@ -21,7 +21,7 @@ This document provides essential context for AI models interacting with this pro
 
 ## 3. Architectural Patterns
 
-*   **Overall Architecture:** The project follows a code-generation architecture. The Python code parses user-defined YAML configuration files and generates C++ source code. This C++ code is then compiled and flashed to the target microcontroller using PlatformIO.
+*   **Overall Architecture:** The project follows a code-generation architecture. The Python code parses user-defined YAML configuration files and generates C++ source code. This C++ code is then compiled and flashed to the target microcontroller using PlatformIO. For Linux platforms, native compilation is used to generate executables that run directly on the target system.
 
 *   **Directory Structure Philosophy:**
     *   `/esphome`: Contains the core Python source code for the ESPHome application.
@@ -42,6 +42,7 @@ This document provides essential context for AI models interacting with this pro
     2.  **ESP8266** (`components/esp8266/`): Espressif ESP8266. Arduino framework only, with memory constraints.
     3.  **RP2040** (`components/rp2040/`): Raspberry Pi Pico/RP2040. Arduino framework with PIO (Programmable I/O) support.
     4.  **LibreTiny** (`components/libretiny/`): Realtek and Beken chips. Supports multiple chip families and auto-generated components.
+    5.  **Linux** (`components/linux/`): Linux systems (Raspberry Pi, x86_64 servers). Uses native compilation via PlatformIO. Supports I2C (i2c-dev kernel interface), GPIO (libgpiod chardev), SPI (spidev), network (BSD sockets), and OTA updates. Ideal for Raspberry Pi deployments with systemd service integration.
 
 ## 4. Coding Conventions & Style Guide
 
@@ -222,7 +223,7 @@ This document provides essential context for AI models interacting with this pro
 *   **Configuration Validation:**
     *   **Common Validators:** `cv.int_`, `cv.float_`, `cv.string`, `cv.boolean`, `cv.int_range(min=0, max=100)`, `cv.positive_int`, `cv.percentage`.
     *   **Complex Validation:** `cv.All(cv.string, cv.Length(min=1, max=50))`, `cv.Any(cv.int_, cv.string)`.
-    *   **Platform-Specific:** `cv.only_on(["esp32", "esp8266"])`, `esp32.only_on_variant(...)`, `cv.only_on_esp32`, `cv.only_on_esp8266`, `cv.only_on_rp2040`.
+    *   **Platform-Specific:** `cv.only_on(["esp32", "esp8266"])`, `esp32.only_on_variant(...)`, `cv.only_on_esp32`, `cv.only_on_esp8266`, `cv.only_on_rp2040`, `cv.only_on_linux`.
     *   **Framework-Specific:** `cv.only_with_framework(...)`, `cv.only_with_arduino`, `cv.only_with_esp_idf`.
     *   **Schema Extensions:**
         ```python
@@ -258,6 +259,12 @@ This document provides essential context for AI models interacting with this pro
         └── components/[component]/ # Component-specific tests
         ```
         Run them using `script/test_build_components`. Use `-c <component>` to test specific components and `-t <target>` for specific platforms.
+    *   **Linux Platform Testing:**
+        - **Compilation Tests**: Linux platform tests are located in `tests/components/linux/`. These tests verify compilation for native Linux targets.
+        - **Test Execution**: Run `esphome compile tests/components/linux/test.linux.yaml` to test basic platform functionality.
+        - **Hardware Tests**: Some tests (I2C, GPIO, SPI) require actual Raspberry Pi hardware and cannot run in CI.
+        - **System Dependencies**: Linux platform requires `libgpiod-dev` and `libi2c-dev` for compilation.
+        - **Native Compilation**: Linux uses PlatformIO's native platform for x86_64 and platform-linux_arm for ARM targets.
     *   **Testing All Components Together:** To verify that all components can be tested together without ID conflicts or configuration issues, use:
         ```bash
         ./script/test_component_grouping.py -e config --all
